@@ -3,6 +3,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fstream>
+#include "Python.h"
 using namespace std;
 
 #define TTL_LIMIT 255
@@ -60,8 +62,14 @@ void traceroute(string destDomain, string destRouter) {
 
     while(!targetReached(destRouter, currentRouter)) {
         currentRouter = ping(destDomain, ttl);
+
+        ofstream fout;        
+        fout.open("sample.txt")
+        fout << currentRouter << endl;
+        fout.close();
+
         if(!currentRouter.empty()) {
-            tr.path.push_back(currentRouter); // add ip of currentRouter, parse result to get IP
+            // tr.path.push_back(currentRouter); // add ip of currentRouter, parse result to get IP
         } else {
             // some exception maybe
             cout << "Some Problem\n";
