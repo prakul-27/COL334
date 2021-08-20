@@ -8,25 +8,32 @@
 #include <arpa/inet.h>
 #include <iostream>
 #include <regex>
+#include <bits/stdc++.h>
 
 using namespace std;
 
+vector<string> listTupleToVector_String(PyObject* incoming) {
+	vector<string> data;
+	if (PyTuple_Check(incoming)) {
+		for(Py_ssize_t i = 0; i < PyTuple_Size(incoming); i++) {
+			PyObject *value = PyTuple_GetItem(incoming, i);
+			data.push_back( PyUnicode_AsUTF8(value) );
+		}
+	} else {
+		if (PyList_Check(incoming)) {
+			for(Py_ssize_t i = 0; i < PyList_Size(incoming); i++) {
+				PyObject *value = PyList_GetItem(incoming, i);
+				data.push_back( PyUnicode_AsUTF8(value) );
+			}
+		} else {
+			throw logic_error("Passed PyObject pointer was not a list or tuple!");
+		}
+	}
+	return data;
+}
+
 int main()
 {
-    // Py_Initialize();
-    // PyObject* myModuleString = PyUnicode_FromString("parser");
-    // PyObject* myModule = PyImport_Import(myModuleString);
-    // PyObject* myFunction = PyObject_GetAttrString(myModule, "dumb");
-
-    // if(myFunction != NULL) {
-    //     PyObject* pTup = PyEval_CallObject(myFunction, NULL);
-    // } else {
-    //     cout << "myFunction returned null\n";
-    // }
-
-    // Py_Finalize();
-    // return 0;
-
     // Set PYTHONPATH TO working directory
    setenv("PYTHONPATH",".",1);
 
@@ -49,7 +56,7 @@ int main()
 
 
    // pFunc is also a borrowed reference 
-   pFunc = PyDict_GetItemString(pDict, (char*)"dumb");
+   pFunc = PyDict_GetItemString(pDict, (char*)"parse");
 
    if (PyCallable_Check(pFunc))
    {
@@ -62,7 +69,7 @@ int main()
    {
        PyErr_Print();
    }
-   cout << PyLong_AsLong(presult) << endl;
+   vector<string> result = listTupleToVector_String(presult);
    Py_DECREF(pValue);
 
    // Clean up
@@ -72,6 +79,10 @@ int main()
    // Finish the Python Interpreter
    Py_Finalize();
 
+
+    for(auto x : result) {
+        cout << x << endl;
+    }
 
     return 0;
 

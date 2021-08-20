@@ -1,7 +1,7 @@
-PING 142.250.183.100 (142.250.183.100) 56(84) bytes of data.
-From 192.168.29.1 icmp_seq=1 Time to live exceeded
+PING 142.250.77.196 (142.250.77.196) 56(84) bytes of data.
+64 bytes from 142.250.77.196: icmp_seq=1 ttl=110 time=8.28 ms
 
---- 142.250.183.100 ping statistics ---
-1 packets transmitted, 0 received, +1 errors, 100% packet loss, time 0ms
-
+--- 142.250.77.196 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 8.279/8.279/8.279/0.000 ms
 

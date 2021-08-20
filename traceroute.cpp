@@ -26,7 +26,15 @@ struct TraceRoute{
     vector<Router>path;
 
     void printPath() {
-        return;
+        for(int i = 0; i < path.size(); i++) {
+            cout << "Hop: " << i + 1 << endl;
+            Router r = path[i];
+
+            cout << "IP: " << r.ip << endl;
+            cout << "rtt_max: " << r.rtt_max << endl;
+
+            cout << "-----------------------" << endl;
+        }
     }
 
     void add(Router r) {
@@ -50,6 +58,7 @@ struct TraceRoute{
     int length() {
         return path.size();
     }
+
 };
 
 string ping(string domain, int ttl) {
@@ -86,6 +95,34 @@ string DN2IP(string domainName) {
     } else return "";    
 }
 
+vector<string> listTupleToVector_String(PyObject* incoming) {
+	vector<string> data;
+	if (PyTuple_Check(incoming)) {
+		for(Py_ssize_t i = 0; i < PyTuple_Size(incoming); i++) {
+			PyObject *value = PyTuple_GetItem(incoming, i);
+			data.push_back( PyUnicode_AsUTF8(value) );
+		}
+	} else {
+		if (PyList_Check(incoming)) {
+			for(Py_ssize_t i = 0; i < PyList_Size(incoming); i++) {
+				PyObject *value = PyList_GetItem(incoming, i);
+				data.push_back( PyUnicode_AsUTF8(value) );
+			}
+		} else {
+			throw logic_error("Passed PyObject pointer was not a list or tuple!");
+		}
+	}
+	return data;
+}
+
+void initEnv() {
+    setenv("PYTHONPATH",".",1);
+    Py_Initialize();
+}
+
+void endEnv() {
+    Py_Finalize();
+}
 
 vector<string> parse(string currentRouter) {
     ofstream fout;        
@@ -93,46 +130,53 @@ vector<string> parse(string currentRouter) {
     fout << currentRouter << endl;
     fout.close();
 
-    Py_Initialize();
-    PyObject* myModuleString = PyUnicode_FromString("parser");
-    PyObject* myModule = PyImport_Import(myModuleString);
-    PyObject* myFunction = PyObject_GetAttrString(myModule, (char *)"parse");
-    cout << "1\n";
-    PyObject* pTup = PyObject_CallObject(myFunction, NULL);
-    cout << "2\n";
+    PyObject *pName, *pModule, *pDict, *pFunc, *pValue, *presult;
 
-    //convert result to vector
-    vector<string>data;
-    if(PyTuple_Check(pTup)) {
-        for(Py_ssize_t i = 0; i < PyTuple_Size(pTup); i++) {
-			PyObject *value = PyTuple_GetItem(pTup, i);
-			data.push_back(PyUnicode_AsUTF8(value));
-		}
-    } else {
-		throw logic_error("Passed PyObject pointer was not a list or tuple!");
-	}
-    Py_Finalize();
+    // Build the name object
+    pName = PyUnicode_FromString((char*)"parser");
+
+    // Load the module object
+    pModule = PyImport_Import(pName);
+
+    // pDict is a borrowed reference 
+    pDict = PyModule_GetDict(pModule);
+
+    // pFunc is also a borrowed reference 
+    pFunc = PyDict_GetItemString(pDict, (char*)"parse");
+
+    if (PyCallable_Check(pFunc))
+    {
+        pValue=Py_BuildValue("(z)",(char*)"something");
+        //    PyErr_Print();
+        //    printf("Let's give this a shot!\n");
+        presult=PyObject_CallObject(pFunc,NULL);
+        PyErr_Print();
+    } else 
+    {
+        PyErr_Print();
+    }
+    vector<string> data = listTupleToVector_String(presult);
+    Py_DECREF(pValue);
+
+    // Clean up
+    Py_DECREF(pModule);
+    Py_DECREF(pName);
 
     return data;
 }
 
-void traceroute(string destDomain, string destRouter) { // (ip, ping result)
+void traceroute(string destIP, string destRouter) { // (ip, ping result)
     int ttl = 1;    
     TraceRoute tr;
     string currentRouter = "";
+    string currentIP = "";
 
-    while(!targetReached(destRouter, currentRouter)) {
-        currentRouter = ping(destDomain, ttl);
-        cout << "Hello\n";
+    initEnv();
 
+    while(true) {
+        currentRouter = ping(destIP, ttl);
         vector<string>data = parse(currentRouter);
-
-        cout << "data values\n";
-
-        for(auto x : data) {
-            cout << x << ' '; 
-        }
-        cout << endl;
+        currentIP = data[0];
 
         if(!currentRouter.empty()) {
             Router r;
@@ -148,32 +192,19 @@ void traceroute(string destDomain, string destRouter) { // (ip, ping result)
             }
             tr.add(r);
         } else {
-            // some exception maybe
             throw logic_error("Some Problem\n");
             return;
         }
         ttl++;
+
+        if(currentIP == destIP || ttl > 256) {
+            break;
+        }
     }
-    
-    // ttl = 1;
-    // for(int i = 0; i < tr.length(); i++) {
-    //     currentRouter = ping(tr.get(i).ip, ttl);
-    //     vector<string>data = parse(currentRouter);
-    //     if(!currentRouter.empty()) {
-    //         Router r;
-    //         r.ip = tr.get(i).ip;
-    //         r.rtt_min = stoi(data[1]);
-    //         r.rtt_avg = stoi(data[2]);
-    //         r.rtt_max = stoi(data[3]);
-    //         r.rtt_mdev = stoi(data[4]);
-    //         r.ttl = ttl;
-    //         tr.update(r, i);
-    //     } else {
-    //         throw logic_error("Some Problem\n");
-    //     }
-    //     ttl++;
-    // }
-    
+
+    tr.printPath();
+    endEnv();
+
     // tr.plot();
 }
 
@@ -181,7 +212,7 @@ int main() {
     string inputDomain;
     cin >> inputDomain;
     
-    string ping_result = ping(inputDomain, TTL_LIMIT);
+    string ping_result = ping(DN2IP(inputDomain), TTL_LIMIT);
 
     if(!DNSExists(ping_result)) {
         cout << "Domain Name Exists\n";
