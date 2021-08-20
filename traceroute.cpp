@@ -7,18 +7,21 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fstream>
+#include <chrono>
 
 #define TTL_LIMIT 255
 using namespace std;
 
+double TIME = 0; // time for ping 
+
 struct Router{
     string ip;
     int ttl;
-    int rtt_min, rtt_avg, rtt_max, rtt_mdev;
+    double rtt;
 
     Router() {
         ip = "";
-        ttl = rtt_min = rtt_avg = rtt_max = rtt_mdev = 0;
+        ttl = rtt = 0;
     } 
 };
 
@@ -31,7 +34,7 @@ struct TraceRoute{
             Router r = path[i];
 
             cout << "IP: " << r.ip << endl;
-            cout << "rtt_max: " << r.rtt_max << endl;
+            cout << "rtt: " << r.rtt << endl;
 
             cout << "-----------------------" << endl;
         }
@@ -67,6 +70,8 @@ string ping(string domain, int ttl) {
     char buffer[128];
     std::string result = "";
     FILE* pipe = popen(cmd, "r");
+
+    auto start = chrono::high_resolution_clock::now();
     if (!pipe) throw std::runtime_error("popen() failed!");
     try {
         while (fgets(buffer, sizeof buffer, pipe) != NULL) {
@@ -77,6 +82,10 @@ string ping(string domain, int ttl) {
         throw;
     }
     pclose(pipe);
+    auto end = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    TIME = duration.count();
+
     return result;
 }
 
@@ -180,16 +189,9 @@ void traceroute(string destIP, string destRouter) { // (ip, ping result)
 
         if(!currentRouter.empty()) {
             Router r;
-            if(data.size() == 1) {
-                r.ip = data[0];
-            } else {
-                r.ip = data[0];
-                r.ttl = ttl;
-                r.rtt_min = stoi(data[1]);
-                r.rtt_avg = stoi(data[2]);
-                r.rtt_max = stoi(data[3]);
-                r.rtt_mdev = stoi(data[4]);
-            }
+            r.ip = data[0];
+            r.ttl = ttl;
+            r.rtt = TIME;
             tr.add(r);
         } else {
             throw logic_error("Some Problem\n");

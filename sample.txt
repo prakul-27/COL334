@@ -1,7 +1,7 @@
-PING 142.250.77.196 (142.250.77.196) 56(84) bytes of data.
-64 bytes from 142.250.77.196: icmp_seq=1 ttl=110 time=8.28 ms
+PING 157.240.198.35 (157.240.198.35) 56(84) bytes of data.
+64 bytes from 157.240.198.35: icmp_seq=1 ttl=50 time=10.1 ms
 
---- 142.250.77.196 ping statistics ---
+--- 157.240.198.35 ping statistics ---
 1 packets transmitted, 1 received, 0% packet loss, time 0ms
-rtt min/avg/max/mdev = 8.279/8.279/8.279/0.000 ms
+rtt min/avg/max/mdev = 10.124/10.124/10.124/0.000 ms
 
