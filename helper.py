@@ -23,5 +23,19 @@ def parse():
         result = (d["destination"], str(d["rtt_min"]), str(d["rtt_avg"]), str(d["rtt_max"]), str(d["rtt_mdev"]))
     return result
 
-def dumb():
-    return 69
+def plot():
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    df = pd.read_csv("dataPoints.csv")
+
+    hops = list(df.hops)
+    rtt = list(df.rtt)
+
+    plt.plot(hops, rtt)
+    plt.xlabel("Hops")
+    plt.ylabel("RTT (in microseconds)")
+    plt.title("Hops vs RTT")
+
+    plt.savefig('graph.png')
+
+    return 1

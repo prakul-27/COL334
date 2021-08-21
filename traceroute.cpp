@@ -55,13 +55,37 @@ struct TraceRoute{
     }
 
     void plot(){
-        return;
+        ofstream file;
+        file.open("dataPoints.csv");
+        file << "hops,rtt,ip\n";
+        for(int i = 0; i < path.size(); i++) {
+            file << path[i].ttl << "," << path[i].rtt << "," << path[i].ip << endl;
+        }
+        file.close();
+
+        PyObject *pName, *pModule, *pDict, *pFunc, *pValue, *presult;
+        pName = PyUnicode_FromString((char*)"helper");
+        pModule = PyImport_Import(pName);
+        pDict = PyModule_GetDict(pModule);
+        pFunc = PyDict_GetItemString(pDict, (char*)"plot");
+
+        if (PyCallable_Check(pFunc)) {
+            pValue=Py_BuildValue("(z)",(char*)"something");
+            presult=PyObject_CallObject(pFunc,NULL);
+            PyErr_Print();
+        } else {
+            PyErr_Print();
+        }
+        int status = PyLong_AsLong(presult);
+
+        if(status != 1) {
+            throw logic_error("Error in Plotting\n");    
+        } 
     }
 
     int length() {
         return path.size();
     }
-
 };
 
 string ping(string domain, int ttl) {
@@ -83,7 +107,7 @@ string ping(string domain, int ttl) {
     }
     pclose(pipe);
     auto end = chrono::high_resolution_clock::now();
-    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+    auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
     TIME = duration.count();
 
     return result;
@@ -140,24 +164,14 @@ vector<string> parse(string currentRouter) {
     fout.close();
 
     PyObject *pName, *pModule, *pDict, *pFunc, *pValue, *presult;
-
-    // Build the name object
-    pName = PyUnicode_FromString((char*)"parser");
-
-    // Load the module object
+    pName = PyUnicode_FromString((char*)"helper");
     pModule = PyImport_Import(pName);
-
-    // pDict is a borrowed reference 
     pDict = PyModule_GetDict(pModule);
-
-    // pFunc is also a borrowed reference 
     pFunc = PyDict_GetItemString(pDict, (char*)"parse");
 
     if (PyCallable_Check(pFunc))
     {
         pValue=Py_BuildValue("(z)",(char*)"something");
-        //    PyErr_Print();
-        //    printf("Let's give this a shot!\n");
         presult=PyObject_CallObject(pFunc,NULL);
         PyErr_Print();
     } else 
@@ -166,8 +180,6 @@ vector<string> parse(string currentRouter) {
     }
     vector<string> data = listTupleToVector_String(presult);
     Py_DECREF(pValue);
-
-    // Clean up
     Py_DECREF(pModule);
     Py_DECREF(pName);
 
@@ -203,11 +215,8 @@ void traceroute(string destIP, string destRouter) { // (ip, ping result)
             break;
         }
     }
-
-    tr.printPath();
+    tr.plot();
     endEnv();
-
-    // tr.plot();
 }
 
 int main() {
