@@ -95,7 +95,6 @@ string ping(string domain, int ttl) {
     std::string result = "";
     FILE* pipe = popen(cmd, "r");
 
-    auto start = chrono::high_resolution_clock::now();
     if (!pipe) throw std::runtime_error("popen() failed!");
     try {
         while (fgets(buffer, sizeof buffer, pipe) != NULL) {
@@ -106,10 +105,6 @@ string ping(string domain, int ttl) {
         throw;
     }
     pclose(pipe);
-    auto end = chrono::high_resolution_clock::now();
-    auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-    TIME = duration.count();
-
     return result;
 }
 
@@ -195,7 +190,12 @@ void traceroute(string destIP, string destRouter) { // (ip, ping result)
     initEnv();
 
     while(true) {
+        auto start = chrono::high_resolution_clock::now();
         currentRouter = ping(destIP, ttl);
+        auto end = chrono::high_resolution_clock::now();
+        auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
+        TIME = duration.count();
+
         vector<string>data = parse(currentRouter);
         currentIP = data[0];
 
