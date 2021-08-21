@@ -2,6 +2,7 @@ def parse():
     import json
     from textwrap import dedent
     import pingparsing
+    import pprint
 
     parser = pingparsing.PingParsing()
     s = open("sample.txt", "r").read()
@@ -18,6 +19,9 @@ def parse():
                 break
             ip += s[i]
         result = (ip,)
+
+        if(d["destination"] == ip):
+            return ("*",)
     else:
         # return IP, rtt values
         result = (d["destination"], str(d["rtt_min"]), str(d["rtt_avg"]), str(d["rtt_max"]), str(d["rtt_mdev"]))

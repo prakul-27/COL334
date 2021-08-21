@@ -12,8 +12,6 @@
 #define TTL_LIMIT 255
 using namespace std;
 
-double TIME = 0; // time for ping 
-
 struct Router{
     string ip;
     int ttl;
@@ -194,16 +192,14 @@ void traceroute(string destIP, string destRouter) { // (ip, ping result)
         currentRouter = ping(destIP, ttl);
         auto end = chrono::high_resolution_clock::now();
         auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
-        TIME = duration.count();
 
         vector<string>data = parse(currentRouter);
         currentIP = data[0];
-
         if(!currentRouter.empty()) {
             Router r;
             r.ip = data[0];
             r.ttl = ttl;
-            r.rtt = TIME;
+            r.rtt = duration.count();
             tr.add(r);
         } else {
             throw logic_error("Some Problem\n");
