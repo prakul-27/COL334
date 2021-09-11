@@ -1,34 +1,43 @@
 from socket import *
 from threading import *
 
-port = 1111
+port = int(input('Enter port number: '))
 send_sckt = socket(AF_INET, SOCK_STREAM)
 rcv_sckt = socket(AF_INET, SOCK_STREAM)
 
 def register(username, server_name):
-    send_mssg = 'REGISTER TOSEND ' + username
-    rcv_mssg = 'REGISTER TORECV ' + username
+    send_mssg = 'REGISTER TOSEND ' + username + '\n\n'
+    rcv_mssg = 'REGISTER TORECV ' + username + '\n\n'
     
     send_sckt.connect((server_name, port))
     send_sckt.send(send_mssg.encode())
     send_mssg_rcvd = send_sckt.recv(1024).decode()
-    
+    print(send_mssg_rcvd)
+    send_sckt.close()
+
     rcv_sckt.connect((server_name, port))
     rcv_sckt.send(rcv_mssg.encode())
     rcv_mssg_rcvd = rcv_sckt.recv(1024).decode()
+    rcv_sckt.close()
+    print(rcv_mssg_rcvd)
 
-    if send_mssg_rcvd != 'REGISTERED TOSEND ' + username:
+    if send_mssg_rcvd != 'REGISTERED TOSEND ' + username + '\n\n':
         print(send_mssg_rcvd)
         return False 
-    if rcv_mssg_rcvd != 'REGISTERED TORECV ' + username:
+    if rcv_mssg_rcvd != 'REGISTERED TORECV ' + username + '\n\n':
         print(rcv_mssg_rcvd)
         return False
 
+    print('Registration complete!')
     return True
 
 while True:
     username = input('username_name: ')
     server_name = input('server_name: ')
+
+    if username == 'ALL':
+        print('Reserved keyword, please try again')
+        continue
 
     if server_name == 'localhost':
         server_name = '127.0.0.1'
@@ -39,7 +48,7 @@ while True:
 def send(rcpt, mssg):
     send_mssg = 'SEND ' + rcpt + '\nContent-length: ' + str(len(rcpt)) + '\n' + mssg
     send_sckt.send(send_mssg.encode())
-    rcvd_mssg = send_sckt.recv(1024).decode() # maybe, rcv_sckt here?
+    rcvd_mssg = send_sckt.recv(1024).decode()
 
     if rcvd_mssg == 'SEND ' + rcpt + '\n' + '\n':
         return True
@@ -66,9 +75,19 @@ def read_cmd_line():
 
 def read_FRWD_mssgs():
     rcv_sckt.listen(1)
+    while True:
+        c, addr = rcv_sckt.accept()
+        mssg = rcv_sckt.recv(1024).decode()
+        elmts = mssg.split('\n')
+        header = elmts[0].split()[0]
+        sender = elmts[0].split()[1]
+        
+        if header != 'FORWARD':
+            rcv_sckt.send('ERROR 103 Header Incomplete\n\n'.encode())
+            continue
 
-    return
-
+        rcv_sckt.send(('RECEIVED ' + sender + '\n\n').encode())
+    
 t1 = Thread(target = read_cmd_line,args = ())
 t2 = Thread(target = read_FRWD_mssgs,args = ())
 
