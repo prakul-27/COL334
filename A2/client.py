@@ -9,16 +9,12 @@ def register(username, server_name):
     send_mssg = 'REGISTER TOSEND ' + username + '\n\n'
     rcv_mssg = 'REGISTER TORECV ' + username + '\n\n'
     
-    send_sckt.connect((server_name, port))
     send_sckt.send(send_mssg.encode())
     send_mssg_rcvd = send_sckt.recv(1024).decode()
     print(send_mssg_rcvd)
-    send_sckt.close()
 
-    rcv_sckt.connect((server_name, port))
     rcv_sckt.send(rcv_mssg.encode())
     rcv_mssg_rcvd = rcv_sckt.recv(1024).decode()
-    rcv_sckt.close()
     print(rcv_mssg_rcvd)
 
     if send_mssg_rcvd != 'REGISTERED TOSEND ' + username + '\n\n':
@@ -27,13 +23,17 @@ def register(username, server_name):
     if rcv_mssg_rcvd != 'REGISTERED TORECV ' + username + '\n\n':
         print(rcv_mssg_rcvd)
         return False
-
-    print('Registration complete!')
     return True
 
+first = False
 while True:
     username = input('username_name: ')
     server_name = input('server_name: ')
+
+    if first is False:
+        send_sckt.connect((server_name, port))
+        rcv_sckt.connect((server_name, port))
+        first = True
 
     if username == 'ALL':
         print('Reserved keyword, please try again')
@@ -68,15 +68,13 @@ def read_cmd_line():
         recipient = details[0][1:]
         mssg = details[1]
 
-        if send() == True:
+        if send(recipient, mssg) == True:
             print("Message delivered successfully")
         else:
             print("Some error message")
 
 def read_FRWD_mssgs():
-    rcv_sckt.listen(1)
     while True:
-        c, addr = rcv_sckt.accept()
         mssg = rcv_sckt.recv(1024).decode()
         elmts = mssg.split('\n')
         header = elmts[0].split()[0]

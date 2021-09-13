@@ -4,7 +4,7 @@ from threading import *
 port = int(input('Enter port number: '))
 server_sckt = socket(AF_INET, SOCK_STREAM)
 server_sckt.bind(('',port))
-server_sckt.listen(100)
+server_sckt.listen()
 print('server is running')
 
 client_list_send = {}
@@ -56,12 +56,12 @@ def register_snd_sckt(mssg, c):
         if mssg[0].split()[2] in client_list_send.keys():
             c.send('USER ALREADY REGISTERED'.encode())
         else:
-            print('222')
             if mssg[0].split()[2].isalnum() == True:
                 client_list_send[mssg[0].split()[2]] = c
                 c.send(('REGISTERED TOSEND '+mssg[0].split()[2]+'\n\n').encode())
             else:
                 c.send('ERROR 100 Malformed username\n\n'.encode())
+        #c.close()        
         #wait()
 
 def register_rcv_sckt(mssg, c):
@@ -74,7 +74,7 @@ def register_rcv_sckt(mssg, c):
                 c.send(('REGISTERED TORECV '+mssg[0].split()[2]+'\n\n').encode())
             else:
                 c.send('ERROR 100 Malformed username\n\n'.encode())
-
+        #c.close()
 while True:
     c, addr = server_sckt.accept()
     mssg = c.recv(1024).decode().split('\n')    
@@ -82,12 +82,10 @@ while True:
     print(mssg)
 
     if mssg[0].split()[0] in ['SEND','RECEIVED','FORWARD'] and c not in is_socket_registered:
-        c.send('ERROR 101 No user registered\n\n')
-        c.close()
+        c.send('ERROR 101 No user registered\n\n'.encode())
         continue        
 
     if mssg[0].split()[0] == 'REGISTER':
-        print('here')
         is_socket_registered.append(c)
         t1 = Thread(target=register_snd_sckt, args=(mssg,c,)) # for snd_sckt
         t2 = Thread(target=register_rcv_sckt, args=(mssg,c,)) # for rcv_sckt
@@ -95,8 +93,6 @@ while True:
         t2.start()
         t2.join()
         t1.join()
-    
-    x = int(input())
-    if x == 1:
-        server_sckt.close()
-        break
+
+    print(client_list_send)
+    print(client_list_rcv)
