@@ -39,19 +39,7 @@ def send(recpt, body, c):
             c.send('ERROR 102 Unable to send\n\n'.encode())
             return False
     return True
-
-def wait():    
-    while True:
-        c, addr = server_sckt.accept()
-        mssg = c.recv(1024).decode().split('\n')
-
-        if mssg[0].split()[0] == 'SEND':
-            recpt = mssg[0].split()[1]
-            body = mssg[3]
-            if send(recpt, body, c) == True:
-                break
-    return
-
+    
 def register_snd_sckt(mssg, c):
     if mssg[0].split()[0] == 'REGISTER' and mssg[0].split()[1] == 'TOSEND':
         if mssg[0].split()[2] in client_list_send.keys():
@@ -62,7 +50,6 @@ def register_snd_sckt(mssg, c):
                 c.send(('REGISTERED TOSEND '+mssg[0].split()[2]+'\n\n').encode())
             else:
                 c.send('ERROR 100 Malformed username\n\n'.encode())
-        #wait()
 
 def register_rcv_sckt(mssg, c):
     if mssg[0].split()[0] == 'REGISTER' and mssg[0].split()[1] == 'TORECV':
@@ -80,10 +67,6 @@ while True:
     mssg = c.recv(1024).decode().split('\n')
 
     print(mssg)
-
-    if mssg[0].split()[0] in ['SEND','RECEIVED','FORWARD'] and c not in is_socket_registered:
-        c.send('ERROR 101 No user registered\n\n'.encode())
-        continue
     
     if mssg[0].split()[0] == 'REGISTER':
         is_socket_registered.append(c)
@@ -93,7 +76,3 @@ while True:
         t2.start()
         t2.join()
         t1.join()
-
-    
-    # print(client_list_send)
-    # print(client_list_rcv)

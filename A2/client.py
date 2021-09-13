@@ -2,7 +2,7 @@ from socket import *
 from threading import *
 
 port = int(input('Enter port number: '))
-ip = ''
+ip = '127.0.0.1'
 
 def register(username, send_sckt, rcv_sckt):
     send_mssg = 'REGISTER TOSEND ' + username + '\n\n'
@@ -68,30 +68,21 @@ def read_FRWD_mssgs(rcv_sckt):
 
 while True:
     username = input('username_name: ')
-    server_name = input('server_name: ')
-
-    ip = server_name
-
-    send_sckt = socket(AF_INET, SOCK_STREAM)
-    rcv_sckt = socket(AF_INET, SOCK_STREAM)
-
-    send_sckt.connect((server_name, port))
-    rcv_sckt.connect((server_name, port))
-
     if username == 'ALL':
         print('Reserved keyword, please try again')
         continue
 
-    if server_name == 'localhost':
-        server_name = '127.0.0.1'
+    send_sckt = socket(AF_INET, SOCK_STREAM)
+    rcv_sckt = socket(AF_INET, SOCK_STREAM)
+
+    send_sckt.connect((ip, port))
+    rcv_sckt.connect((ip, port))
 
     if register(username, send_sckt, rcv_sckt) == True:
         t1 = Thread(target = read_cmd_line,args = (send_sckt,))
         t2 = Thread(target = read_FRWD_mssgs,args = (rcv_sckt,))
-
         t1.start()
         t2.start()
-
         t1.join()
         t2.join()
         break   
