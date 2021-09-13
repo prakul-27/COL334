@@ -2,13 +2,12 @@ from socket import *
 from threading import *
 
 port = int(input('Enter port number: '))
-send_sckt = socket(AF_INET, SOCK_STREAM)
-rcv_sckt = socket(AF_INET, SOCK_STREAM)
+ip = ''
 
-def register(username, server_name):
+def register(username, send_sckt, rcv_sckt):
     send_mssg = 'REGISTER TOSEND ' + username + '\n\n'
     rcv_mssg = 'REGISTER TORECV ' + username + '\n\n'
-    
+
     send_sckt.send(send_mssg.encode())
     send_mssg_rcvd = send_sckt.recv(1024).decode()
     print(send_mssg_rcvd)
@@ -25,28 +24,9 @@ def register(username, server_name):
         return False
     return True
 
-first = False
-while True:
-    username = input('username_name: ')
-    server_name = input('server_name: ')
-
-    if first is False:
-        send_sckt.connect((server_name, port))
-        rcv_sckt.connect((server_name, port))
-        first = True
-
-    if username == 'ALL':
-        print('Reserved keyword, please try again')
-        continue
-
-    if server_name == 'localhost':
-        server_name = '127.0.0.1'
-
-    if register(username, server_name) == True:
-        break
-
-def send(rcpt, mssg):
+def send(rcpt, mssg, send_sckt):
     send_mssg = 'SEND ' + rcpt + '\nContent-length: ' + str(len(rcpt)) + '\n' + mssg
+    
     send_sckt.send(send_mssg.encode())
     rcvd_mssg = send_sckt.recv(1024).decode()
 
@@ -56,7 +36,7 @@ def send(rcpt, mssg):
 
     return False
 
-def read_cmd_line():
+def read_cmd_line(send_sckt):
     while True:
         mssg = input("Enter message: ")
         details = mssg.split()
@@ -68,12 +48,12 @@ def read_cmd_line():
         recipient = details[0][1:]
         mssg = details[1]
 
-        if send(recipient, mssg) == True:
+        if send(recipient, mssg, send_sckt) == True:
             print("Message delivered successfully")
         else:
             print("Some error message")
 
-def read_FRWD_mssgs():
+def read_FRWD_mssgs(rcv_sckt):
     while True:
         mssg = rcv_sckt.recv(1024).decode()
         elmts = mssg.split('\n')
@@ -85,12 +65,33 @@ def read_FRWD_mssgs():
             continue
 
         rcv_sckt.send(('RECEIVED ' + sender + '\n\n').encode())
-    
-t1 = Thread(target = read_cmd_line,args = ())
-t2 = Thread(target = read_FRWD_mssgs,args = ())
 
-t1.start()
-t2.start()
+while True:
+    username = input('username_name: ')
+    server_name = input('server_name: ')
 
-t1.join()
-t2.join()
+    ip = server_name
+
+    send_sckt = socket(AF_INET, SOCK_STREAM)
+    rcv_sckt = socket(AF_INET, SOCK_STREAM)
+
+    send_sckt.connect((server_name, port))
+    rcv_sckt.connect((server_name, port))
+
+    if username == 'ALL':
+        print('Reserved keyword, please try again')
+        continue
+
+    if server_name == 'localhost':
+        server_name = '127.0.0.1'
+
+    if register(username, send_sckt, rcv_sckt) == True:
+        t1 = Thread(target = read_cmd_line,args = (send_sckt,))
+        t2 = Thread(target = read_FRWD_mssgs,args = (rcv_sckt,))
+
+        t1.start()
+        t2.start()
+
+        t1.join()
+        t2.join()
+        break   
