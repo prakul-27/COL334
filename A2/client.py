@@ -1,7 +1,7 @@
 from socket import *
 from threading import *
 
-port = int(input('Enter port number: '))
+port = 1111 # int(input('Enter port number: '))
 ip = '127.0.0.1'
 
 def register(username, send_sckt, rcv_sckt):
@@ -25,7 +25,7 @@ def register(username, send_sckt, rcv_sckt):
     return True
 
 def send(rcpt, mssg, send_sckt):
-    send_mssg = 'SEND ' + rcpt + '\nContent-length: ' + str(len(rcpt)) + '\n' + mssg
+    send_mssg = 'SEND ' + rcpt + '\nContent-length: ' + str(len(rcpt)) + '\n\n' + mssg
     
     send_sckt.send(send_mssg.encode())
     rcvd_mssg = send_sckt.recv(1024).decode()

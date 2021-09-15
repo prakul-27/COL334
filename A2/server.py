@@ -1,7 +1,7 @@
 from socket import *
 from threading import * 
 
-port = int(input('Enter port number: '))
+port = 1111 #int(input('Enter port number: '))
 server_sckt = socket(AF_INET, SOCK_STREAM)
 server_sckt.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 server_sckt.bind(('',port))
@@ -39,7 +39,10 @@ def send(recpt, body, c):
             c.send('ERROR 102 Unable to send\n\n'.encode())
             return False
     return True
-    
+
+def wait(c):
+    return
+
 def register_snd_sckt(mssg, c):
     if mssg[0].split()[0] == 'REGISTER' and mssg[0].split()[1] == 'TOSEND':
         if mssg[0].split()[2] in client_list_send.keys():
@@ -50,6 +53,7 @@ def register_snd_sckt(mssg, c):
                 c.send(('REGISTERED TOSEND '+mssg[0].split()[2]+'\n\n').encode())
             else:
                 c.send('ERROR 100 Malformed username\n\n'.encode())
+    wait(c)
 
 def register_rcv_sckt(mssg, c):
     if mssg[0].split()[0] == 'REGISTER' and mssg[0].split()[1] == 'TORECV':
@@ -63,7 +67,7 @@ def register_rcv_sckt(mssg, c):
                 c.send('ERROR 100 Malformed username\n\n'.encode())
 
 while True:
-    c, addr = server_sckt.accept()
+    c, _ = server_sckt.accept()
     mssg = c.recv(1024).decode().split('\n')
 
     print(mssg)
