@@ -25,7 +25,7 @@ def register(username, send_sckt, rcv_sckt):
     return True
 
 def send(rcpt, mssg, send_sckt):
-    send_mssg = 'SEND ' + rcpt + '\nContent-length: ' + str(len(rcpt)) + '\n\n' + mssg
+    send_mssg = 'SEND ' + rcpt + '\nContent-length: ' + str(len(mssg)) + '\n\n' + mssg
     
     send_sckt.send(send_mssg.encode())
     rcvd_mssg = send_sckt.recv(1024).decode()
@@ -46,12 +46,15 @@ def read_cmd_line(send_sckt):
             continue
         
         recipient = details[0][1:]
-        mssg = details[1]
+        words = details[1:]
+        mssg = ''
+        for word in words:
+            mssg += (word + ' ')
 
         if send(recipient, mssg, send_sckt) == True:
             print("Message delivered successfully")
         else:
-            print("Some error message")
+            print('Some error, try again')
 
 def read_FRWD_mssgs(rcv_sckt):
     while True:
