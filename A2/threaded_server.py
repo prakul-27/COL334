@@ -1,5 +1,6 @@
 from socket import *
-from threading import * 
+from os import *
+from _thread import *
 
 port = 1111 #int(input('Enter port number: '))
 server_sckt = socket(AF_INET, SOCK_STREAM)
@@ -7,6 +8,7 @@ server_sckt.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 server_sckt.bind(('',port))
 server_sckt.listen()
 print('server is running')
+clients = 0
 
 client_list_send = {}
 client_list_rcv = {}
@@ -67,16 +69,12 @@ while True:
     mssg = c.recv(1024).decode().split('\n')
 
     print(mssg)
-    print(_)
     
     if mssg[0].split()[0] == 'REGISTER':
         is_socket_registered.append(c)
-        t1 = Thread(target=register_snd_sckt, args=(mssg,c,)) # for snd_sckt
-        t2 = Thread(target=register_rcv_sckt, args=(mssg,c,)) # for rcv_sckt        
-        t1.start()
-        t2.start()
-        t2.join()
-        t1.join()
-
+        clients += 1
+        start_new_thread(register_snd_sckt, (mssg, c,))
+        start_new_thread(register_rcv_sckt, (mssg, c))
+    
     print(client_list_send)
     print(client_list_rcv)
