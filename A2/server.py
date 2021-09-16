@@ -14,19 +14,22 @@ client_list_rcv = {}
 is_socket_registered = []
 
 def send(recpt, body, c):
-    if recpt not in client_list_rcv:
+    if recpt not in client_list_rcv and recpt != 'ALL':
         c.send('ERROR 102 Unable to send\n\n'.encode())
         return False
     sender = ''
     for sndr, snd_sckt in client_list_send.items():
         if snd_sckt == c:
             sender = sndr
-            break
+            break    
     mssg = 'FORWARD '+sender+'\nContent-length: '+str(len(body))+'\n\n'+body
+    print('recpt ' + recpt)
     if recpt == 'ALL':
+        print('here')
         for _, rcv_sckt in client_list_rcv.items():
             rcv_sckt.send(mssg.encode())
-            rcvd_mssg = server_sckt.recv(1024).decode()
+            rcvd_mssg = rcv_sckt.recv(1024).decode()
+            print('rcvd_mssg ', rcvd_mssg)
             if rcvd_mssg != 'RECEIVED '+sender+'\n\n':
                 c.send('ERROR 102 Unable to send\n\n'.encode())
                 return False
@@ -35,6 +38,7 @@ def send(recpt, body, c):
         rcv_sckt = client_list_rcv[recpt]
         rcv_sckt.send(mssg.encode())
         rcvd_mssg = rcv_sckt.recv(1024).decode()
+        print(rcvd_mssg)
         if rcvd_mssg != 'RECEIVED '+sender+'\n\n':
             c.send('ERROR 102 Unable to send\n\n'.encode())
             return False

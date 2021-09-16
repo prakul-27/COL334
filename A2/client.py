@@ -23,6 +23,7 @@ def register(username, send_sckt, rcv_sckt):
     if rcv_mssg_rcvd != 'REGISTERED TORECV ' + username + '\n\n':
         print(rcv_mssg_rcvd)
         return False
+    print('Registration Successful!')
     return True
 
 def send(rcpt, mssg, send_sckt):
@@ -39,7 +40,7 @@ def send(rcpt, mssg, send_sckt):
 
 def read_cmd_line(send_sckt):
     while True:
-        mssg = input("Enter message: ")
+        mssg = input()
         details = mssg.split()
         
         if len(details) <= 1 or details[0][0] != '@':
@@ -63,13 +64,12 @@ def read_FRWD_mssgs(rcv_sckt):
         elmts = mssg.split('\n')
         header = elmts[0].split()[0]
         sender = elmts[0].split()[1]
-        
+
         if header != 'FORWARD':
             rcv_sckt.send('ERROR 103 Header Incomplete\n\n'.encode())
             continue
         
-        print('@'+sender+' '+mssg)
-
+        print(sender+': '+elmts[3])
         rcv_sckt.send(('RECEIVED ' + sender + '\n\n').encode())
 
 while True:
