@@ -25,7 +25,7 @@ def send(recpt, body, c):
     mssg = 'FORWARD '+sender+'\nContent-length: '+str(len(body))+'\n\n'+body
     if recpt == 'ALL':
         for _, rcv_sckt in client_list_rcv.items():
-            server_sckt.sendto(mssg.encode(), rcv_sckt.getpeername())
+            rcv_sckt.send(mssg.encode())
             rcvd_mssg = server_sckt.recv(1024).decode()
             if rcvd_mssg != 'RECEIVED '+sender+'\n\n':
                 c.send('ERROR 102 Unable to send\n\n'.encode())
@@ -35,10 +35,10 @@ def send(recpt, body, c):
         rcv_sckt = client_list_rcv[recpt]
         rcv_sckt.send(mssg.encode())
         rcvd_mssg = rcv_sckt.recv(1024).decode()
-        print(rcvd_mssg)
         if rcvd_mssg != 'RECEIVED '+sender+'\n\n':
             c.send('ERROR 102 Unable to send\n\n'.encode())
             return False
+    c.send(('SEND '+str(recpt)+'\n\n').encode())
     return True
 def wait(c):
     while True:

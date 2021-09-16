@@ -31,7 +31,7 @@ def send(rcpt, mssg, send_sckt):
     send_sckt.send(send_mssg.encode())
     rcvd_mssg = send_sckt.recv(1024).decode()
 
-    if rcvd_mssg == 'SEND ' + rcpt + '\n' + '\n':
+    if rcvd_mssg == 'SEND ' + rcpt + '\n\n':
         return True
     print(rcvd_mssg)
 
@@ -67,6 +67,8 @@ def read_FRWD_mssgs(rcv_sckt):
         if header != 'FORWARD':
             rcv_sckt.send('ERROR 103 Header Incomplete\n\n'.encode())
             continue
+        
+        print('@'+sender+' '+mssg)
 
         rcv_sckt.send(('RECEIVED ' + sender + '\n\n').encode())
 
