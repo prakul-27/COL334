@@ -1,7 +1,8 @@
+from os import read
 from socket import *
 from threading import *
 
-port = 1111 # int(input('Enter port number: '))
+port = 1111
 ip = '127.0.0.1'
 
 def register(username, send_sckt, rcv_sckt):
@@ -84,8 +85,11 @@ while True:
     if register(username, send_sckt, rcv_sckt) == True:
         t1 = Thread(target = read_cmd_line,args = (send_sckt,))
         t2 = Thread(target = read_FRWD_mssgs,args = (rcv_sckt,))
-        t1.start()
+        t1.start() 
         t2.start()
         t1.join()
         t2.join()
-        break   
+        break
+    else:
+        send_sckt.close()
+        rcv_sckt.close()
