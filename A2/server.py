@@ -26,14 +26,15 @@ def send(recpt, body, c):
     print('recpt ' + recpt)
     if recpt == 'ALL':
         print('here')
-        for _, rcv_sckt in client_list_rcv.items():
+        for user, rcv_sckt in client_list_rcv.items():
+            if user == sender:
+                continue
             rcv_sckt.send(mssg.encode())
             rcvd_mssg = rcv_sckt.recv(1024).decode()
             print('rcvd_mssg ', rcvd_mssg)
             if rcvd_mssg != 'RECEIVED '+sender+'\n\n':
                 c.send('ERROR 102 Unable to send\n\n'.encode())
                 return False
-        return True
     else:
         rcv_sckt = client_list_rcv[recpt]
         rcv_sckt.send(mssg.encode())
